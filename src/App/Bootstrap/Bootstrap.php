@@ -13,13 +13,13 @@ namespace Kovey\Websocket\App\Bootstrap;
 
 use Kovey\Library\Process;
 use Kovey\Library\Config\Manager;
-use Kovey\Library\Logger\Logger;
-use Kovey\Library\Logger\Monitor;
-use Kovey\Library\Logger\Db;
-use Kovey\Library\Parse\Container;
+use Kovey\Logger\Logger;
+use Kovey\Logger\Monitor;
+use Kovey\Logger\Db;
+use Kovey\Library\Container\Container;
 use Kovey\Websocket\App\App;
 use Kovey\Websocket\Server\Server;
-use Kovey\Components\Process\UserProcess;
+use Kovey\Library\Process\UserProcess;
 
 class Bootstrap
 {
@@ -34,6 +34,7 @@ class Bootstrap
 	{
 		ko_change_process_name(Manager::get('server.websocket.name') . ' websocket root');
 		Logger::setLogPath(Manager::get('server.logger.info'), Manager::get('server.logger.exception'), Manager::get('server.logger.error'), Manager::get('server.logger.warning'));
+        Logger::setCategory(Manager::get('server.websocket.name'));
 		Db::setLogDir(Manager::get('server.logger.db'));
 		Monitor::setLogDir(Manager::get('server.logger.monitor'));
 	}

@@ -21,8 +21,8 @@ use Kovey\Library\Config\Manager;
 use Kovey\Websocket\App\Bootstrap\Autoload;
 use Kovey\Websocket\Server\Server;
 use Kovey\Library\Process\UserProcess;
-use Kovey\Library\Logger\Logger;
-use Kovey\Library\Logger\Monitor;
+use Kovey\Logger\Logger;
+use Kovey\Logger\Monitor;
 use Google\Protobuf\Internal\Message;
 
 class App
@@ -250,10 +250,12 @@ class App
 	 * @param int $fd
 	 *
 	 * @param string $ip
+     *
+     * @param string $traceId
 	 *
 	 * @return Array
 	 */
-	public function handler(Message $packet, $fd, string $ip) : Array
+	public function handler(Message $packet, $fd, string $ip, string $traceId) : Array
 	{
 		$begin = microtime(true);
 		$reqTime = time();
@@ -264,25 +266,25 @@ class App
 					return call_user_func($this->events['error'], 'protobuf event is not register');
 				}
 
-				$this->sendToMonitor($reqTime, $begin, $ip, 'exception');
+				$this->sendToMonitor($reqTime, $begin, $ip, 'exception', $traceId);
 				return array();
 			}
 
 			$message = call_user_func($this->events['protobuf'], $packet);
 			if (empty($message['handler']) || empty($message['method'])) {
 				if (isset($this->events['error'])) {
-					$this->sendToMonitor($reqTime, $begin, $ip, 'exception');
+					$this->sendToMonitor($reqTime, $begin, $ip, 'exception', $traceId);
 					return call_user_func($this->events['error'], 'unknown message');
 				}
 
-				$this->sendToMonitor($reqTime, $begin, $ip, 'exception');
+				$this->sendToMonitor($reqTime, $begin, $ip, 'exception', $traceId);
 				return array();
 			}
 
-			$instance = $this->container->get($this->config['websocket']['handler'] . '\\' . ucfirst($message['handler']));
+			$instance = $this->container->get($this->config['websocket']['handler'] . '\\' . ucfirst($message['handler']), $traceId);
 			if (!$instance instanceof HandlerAbstract) {
 				if (isset($this->events['error'])) {
-					$this->sendToMonitor($reqTime, $begin, $ip, 'exception', $message);
+					$this->sendToMonitor($reqTime, $begin, $ip, 'exception', $traceId, $message);
 					return call_user_func($this->events['error'], sprintf('%s is not extends HandlerAbstract', ucfirst($message['handler'])));
 				}
 
@@ -292,23 +294,23 @@ class App
 			if (!isset($this->events['run_handler'])) {
 				$method = $message['method'];
 				$result = $instance->$method($message['message'], $fd);
-				$this->sendToMonitor($reqTime, $begin, $ip, 'exception', $message);
+				$this->sendToMonitor($reqTime, $begin, $ip, 'exception', $traceId, $message);
                 return $result;
 			}
 
 			$result = call_user_func($this->events['run_handler'], $instance, $message['method'], $message['message'], $fd);
-			$this->sendToMonitor($reqTime, $begin, $ip, 'success', $message);
+			$this->sendToMonitor($reqTime, $begin, $ip, 'success', $traceId, $message);
 			return $result;
-		} catch (\Exception $e) {
-			Logger::writeExceptionLog(__LINE__, __FILE__, $e);
+		} catch (KoveyException $e) {
+			Logger::writeExceptionLog(__LINE__, __FILE__, $e, $traceId);
 			if (isset($this->events['error'])) {
 				$this->sendToMonitor($reqTime, $begin, $ip, 'exception');
 				return call_user_func($this->events['error'], 'exception');
 			}
 		} catch (\Throwable $e) {
-			Logger::writeExceptionLog(__LINE__, __FILE__, $e);
+			Logger::writeExceptionLog(__LINE__, __FILE__, $e, $traceId);
 			if (isset($this->events['error'])) {
-				$this->sendToMonitor($reqTime, $begin, $ip, 'exception');
+				$this->sendToMonitor($reqTime, $begin, $ip, 'exception', $traceId);
 				return call_user_func($this->events['error'], 'throwable exception');
 			}
 		} 	
@@ -324,12 +326,14 @@ class App
 	 * @param string $ip
 	 *
 	 * @param string $type
+     *
+     * @param string $traceId
 	 *
 	 * @param Message $message
 	 *
 	 * @return null
 	 */
-	private function sendToMonitor(int $reqTime, float $begin, string $ip, string $type, $message = null)
+	private function sendToMonitor(int $reqTime, float $begin, string $ip, string $type, string $traceId, $message = null)
 	{
 		$end = microtime(true);
 
@@ -342,7 +346,8 @@ class App
 			'ip' => $ip,
 			'time' => $reqTime,
 			'timestamp' => date('Y-m-d H:i:s', $reqTime),
-			'minute' => date('YmdHi', $reqTime)
+            'minute' => date('YmdHi', $reqTime),
+            'traceId' => $traceId
 		);
 
 		$this->monitor($data);

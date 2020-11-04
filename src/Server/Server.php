@@ -11,11 +11,11 @@
  */
 namespace Kovey\Websocket\Server;
 
-use Kovey\Library\Logger\Logger;
-use Kovey\Websocket\Protocol\Exception;
+use Kovey\Logger\Logger;
 use Google\Protobuf\Internal\Message;
 use Kovey\Library\Exception\CloseConnectionException;
 use Kovey\Library\Exception\KoveyException;
+use Kovey\Library\Exception\ProtocolException;
 use Kovey\Library\Server\PortInterface;
 
 class Server implements PortInterface
@@ -266,20 +266,22 @@ class Server implements PortInterface
             return;
         }
 
+        $traceId = hash('sha256', uniqid($frame->fd, true) . random_int(1000000, 9999999));
 		try {
 			$protobuf = call_user_func($this->events['unpack'], $frame->data);
             if (empty($protobuf)) {
                 throw new Exception('unpack error', 500, 'unpack_exception');
             }
 
-            $this->handler($protobuf, $frame->fd);
+            $this->handler($protobuf, $frame->fd, $traceId);
         } catch (CloseConnectionException $e) {
             $serv->disconnect($frame->fd, WebsocketCode::THROW_CLOSE_CONNECTION_EXCEPTION, 'THROW_CLOSE_CONNECTION_EXCEPTION');
-		} catch (Exception $e) {
+            Logger::writeExceptionLog(__LINE__, __FILE__, $traceId);
+		} catch (ProtocolException $e) {
 			$serv->disconnect($frame->fd, WebsocketCode::PROTOCOL_ERROR, 'PROTOCOL_ERROR');
-			Logger::writeExceptionLog(__LINE__, __FILE__, $e);
+			Logger::writeExceptionLog(__LINE__, __FILE__, $e, $traceId);
 		} catch (\Throwable $e) {
-			Logger::writeExceptionLog(__LINE__, __FILE__, $e);
+			Logger::writeExceptionLog(__LINE__, __FILE__, $e, $traceId);
 		}
     }
 
@@ -289,17 +291,19 @@ class Server implements PortInterface
 	 * @param Message $packet
 	 *
 	 * @param int $fd
+     *
+     * @param string $traceId
 	 *
 	 * @return null
 	 */
-    private function handler(Message $packet, $fd)
+    private function handler(Message $packet, $fd, string $traceId)
     {
         if (!isset($this->events['handler'])) {
             $this->serv->disconnect($fd, WebsocketCode::NO_HANDLER, 'NO_HANDLER');
             return;
         }
 
-        $result = call_user_func($this->events['handler'], $packet, $fd, $this->serv->getClientInfo($fd)['remote_ip']);
+        $result = call_user_func($this->events['handler'], $packet, $fd, $this->serv->getClientInfo($fd)['remote_ip'], $traceId);
 
         if (empty($result) || !isset($result['message']) || !isset($result['action'])) {
             return;
