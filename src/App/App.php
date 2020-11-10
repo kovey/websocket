@@ -7,8 +7,6 @@
  *
  * @time        2020-03-08 15:51:43
  *
- * @file  kovey/Kovey/Websocket/App/App.php
- *
  * @author      kovey
  */
 namespace Kovey\Websocket\App;
@@ -24,8 +22,9 @@ use Kovey\Library\Process\UserProcess;
 use Kovey\Logger\Logger;
 use Kovey\Logger\Monitor;
 use Google\Protobuf\Internal\Message;
+use Kovey\Connection\AppInterface;
 
-class App
+class App implements AppInterface
 {
 	/**
 	 * @description App实例
@@ -421,6 +420,15 @@ class App
 	{
 		try {
 			foreach ($this->pools as $pool) {
+                if (is_array($pool)) {
+                    foreach ($pool as $pl) {
+                        $pl->init();
+                        if (count($pl->getErrors()) > 0) {
+                            Logger::writeErrorLog(__LINE__, __FILE__, implode(';', $pl->getErrors()));
+                        }
+                    }
+                    continue;
+                }
 				$pool->init();
 				if (count($pool->getErrors()) > 0) {
 					Logger::writeErrorLog(__LINE__, __FILE__, implode(';', $pool->getErrors()));
@@ -587,12 +595,15 @@ class App
 	 * @param string $name
 	 *
 	 * @param PoolInterface $pool
+     *
+     * @param int $partition
 	 *
-	 * @return App
+	 * @return AppInterface
 	 */
-	public function registerPool(string $name, PoolInterface $pool) : App
+	public function registerPool(string $name, PoolInterface $pool, int $partition = 0) : AppInterface
 	{
-		$this->pools[$name] = $pool;
+        $this->pools[$name] ??= array();
+		$this->pools[$name][$partition] = $pool;
 		return $this;
 	}
 
@@ -600,12 +611,14 @@ class App
 	 * @description 获取连接池
 	 *
 	 * @param string $name
+     *
+     * @param int $partition
 	 *
 	 * @return PoolInterface | null
 	 */
-	public function getPool(string $name) : ? PoolInterface
+	public function getPool(string $name, int $partition = 0) : ? PoolInterface
 	{
-		return $this->pools[$name] ?? false;
+		return $this->pools[$name][$partition] ?? null;
 	}
 
 	/**
