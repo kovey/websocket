@@ -23,6 +23,7 @@ use Kovey\Logger\Logger;
 use Kovey\Logger\Monitor;
 use Google\Protobuf\Internal\Message;
 use Kovey\Connection\AppInterface;
+use Kovey\Library\Util\Json;
 
 class App implements AppInterface
 {
