@@ -157,11 +157,7 @@ class Server implements PortInterface
 		try {
 			call_user_func($this->events['initPool'], $this);
 		} catch (\Throwable $e) {
-			if ($this->isRunDocker) {
-				Logger::writeExceptionLog(__LINE__, __FILE__, $e);
-			} else {
-				echo $e->getMessage() . PHP_EOL . $e->getTraceAsString() . PHP_EOL;
-			}
+            Logger::writeExceptionLog(__LINE__, __FILE__, $e);
 		}
     }
 
@@ -208,14 +204,9 @@ class Server implements PortInterface
 				return;
 			}
 
-			call_user_func($this->events['pipeMessage'], $data['p'] ?? '', $data['m'] ?? '', $data['a'] ?? array());
+			call_user_func($this->events['pipeMessage'], $data['p'] ?? '', $data['m'] ?? '', $data['a'] ?? array(), $data['t'] ?? '');
 		} catch (\Throwable $e) {
-			if ($this->isRunDocker) {
-				Logger::writeExceptionLog(__LINE__, __FILE__, $e);
-			} else {
-				echo $e->getMessage() . PHP_EOL .
-					$e->getTraceAsString() . PHP_EOL;
-			}
+            Logger::writeExceptionLog(__LINE__, __FILE__, $e, $data['t'] ?? '');
 		}
     }
 
