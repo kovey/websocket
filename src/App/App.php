@@ -295,16 +295,15 @@ class App implements AppInterface
 			}
 
             $monitorType = 'success';
-            $openTransaction = isset($keywords['openTransaction']) && $keywords['openTransaction'];
 			if (!isset($this->events['run_handler'])) {
 				$method = $message['method'];
-                if ($openTransaction) {
-                    $keywords['database']->beginTransaction();
+                if ($keywords['openTransaction']) {
+                    $keywords['database']->getConnection()->beginTransaction();
                     try {
                         $result = $instance->$method($message['message'], $fd);
-                        $keywords['database']->commit();
+                        $keywords['database']->getConnection()->commit();
                     }  catch (\Throwable $e) {
-                        $keywords['database']->rollBack();
+                        $keywords['database']->getConnection()->rollBack();
                         throw $e;
                     }
                 }  else {
@@ -313,13 +312,13 @@ class App implements AppInterface
                 return $result;
 			}
 
-            if ($openTransaction) {
-                $keywords['database']->beginTransaction();
+            if ($keywords['openTransaction']) {
+                $keywords['database']->getConnection()->beginTransaction();
                 try {
                     $result = call_user_func($this->events['run_handler'], $instance, $message['method'], $message['message'], $fd);
-                    $keywords['database']->commit();
+                    $keywords['database']->getConnection()->commit();
                 } catch (\Throwable $e) {
-                    $keywords['database']->rollBack();
+                    $keywords['database']->getConnection()->rollBack();
                     throw $e;
                 }
             } else {
