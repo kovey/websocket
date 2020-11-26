@@ -20,100 +20,100 @@ use Kovey\Library\Server\PortInterface;
 
 class Server implements PortInterface
 {
-	/**
-	 * @description 服务器
-	 *
-	 * @var Swoole\Websocket\Server
-	 */
+    /**
+     * @description 服务器
+     *
+     * @var Swoole\Websocket\Server
+     */
     private \Swoole\WebSocket\Server $serv;
 
-	/**
-	 * @description 配置
-	 *
-	 * @var Array
-	 */
+    /**
+     * @description 配置
+     *
+     * @var Array
+     */
     private Array $conf;
 
-	/**
-	 * @description 事件
-	 *
-	 * @var Array
-	 */
-	private Array $events;
+    /**
+     * @description 事件
+     *
+     * @var Array
+     */
+    private Array $events;
 
-	/**
-	 * @description 允许的事件
-	 *
-	 * @var Array
-	 */
-	private Array $allowEvents;
+    /**
+     * @description 允许的事件
+     *
+     * @var Array
+     */
+    private Array $allowEvents;
 
-	/**
-	 * @description 是否运行在docker中
-	 *
-	 * @var bool
-	 */
-	private bool $isRunDocker;
+    /**
+     * @description 是否运行在docker中
+     *
+     * @var bool
+     */
+    private bool $isRunDocker;
 
-	/**
-	 * @description 构造函数
-	 *
-	 * @param Array $conf
-	 *
-	 * @return Server
-	 */
+    /**
+     * @description 构造函数
+     *
+     * @param Array $conf
+     *
+     * @return Server
+     */
     public function __construct(Array $conf)
     {
         $this->conf = $conf;
-		$this->isRunDocker = ($this->conf['run_docker'] ?? 'Off') === 'On';
+        $this->isRunDocker = ($this->conf['run_docker'] ?? 'Off') === 'On';
         $this->serv = new \Swoole\WebSocket\Server($this->conf['host'], $this->conf['port']);
         $this->serv->set(array(
-			'enable_coroutine' => true,
-			'worker_num' => $this->conf['worker_num'],
+            'enable_coroutine' => true,
+            'worker_num' => $this->conf['worker_num'],
             'daemonize' => !$this->isRunDocker,
             'pid_file' => $this->conf['pid_file'],
             'log_file' => $this->conf['log_file'],
         ));
 
-		$logDir = dirname($this->conf['log_file']);
-		if (!is_dir($logDir)) {
-			mkdir($logDir, 0777, true);
-		}
-		$pidDir = dirname($this->conf['pid_file']);
-		if (!is_dir($pidDir)) {
-			mkdir($pidDir, 0777, true);
+        $logDir = dirname($this->conf['log_file']);
+        if (!is_dir($logDir)) {
+            mkdir($logDir, 0777, true);
+        }
+        $pidDir = dirname($this->conf['pid_file']);
+        if (!is_dir($pidDir)) {
+            mkdir($pidDir, 0777, true);
         }
 
-		$this->initAllowEvents()
-			->initCallback();
+        $this->initAllowEvents()
+            ->initCallback();
     }
 
-	/**
-	 * @description 初始化允许的事件
-	 *
-	 * @return Server
-	 */
-	private function initAllowEvents() : Server
-	{
-		$this->allowEvents = array(
-			'handler' => 1,
-			'pipeMessage' => 1,
+    /**
+     * @description 初始化允许的事件
+     *
+     * @return Server
+     */
+    private function initAllowEvents() : Server
+    {
+        $this->allowEvents = array(
+            'handler' => 1,
+            'pipeMessage' => 1,
             'initPool' => 1,
             'pack' => 1,
             'unpack' => 1,
             'error' => 1,
             'close' => 1,
             'open' => 1
-		);
+        );
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * @description 初始化回调
-	 *
-	 * @return Server
-	 */
+    /**
+     * @description 初始化回调
+     *
+     * @return Server
+     */
     private function initCallback() : Server
     {
         $this->serv->on('open', array($this, 'open'));
@@ -122,103 +122,103 @@ class Server implements PortInterface
         $this->serv->on('pipeMessage', array($this, 'pipeMessage'));
         $this->serv->on('workerStart', array($this, 'workerStart'));
         $this->serv->on('managerStart', array($this, 'managerStart'));
-		return $this;
+        return $this;
     }
 
-	/**
-	 * @description manager 启动回调
-	 *
-	 * @param Swoole\Server $serv
-	 *
-	 * @return null
-	 */
+    /**
+     * @description manager 启动回调
+     *
+     * @param Swoole\Server $serv
+     *
+     * @return null
+     */
     public function managerStart(\Swoole\WebSocket\Server $serv)
     {
         ko_change_process_name($this->conf['name'] . ' master');
     }
 
-	/**
-	 * @description worker 启动回调
-	 *
-	 * @param Swoole\Server $serv
-	 *
-	 * @param int $workerId
-	 *
-	 * @return null
-	 */
+    /**
+     * @description worker 启动回调
+     *
+     * @param Swoole\Server $serv
+     *
+     * @param int $workerId
+     *
+     * @return null
+     */
     public function workerStart(\Swoole\WebSocket\Server $serv, $workerId)
     {
         ko_change_process_name($this->conf['name'] . ' worker');
 
-		if (!isset($this->events['initPool'])) {
-			return;
-		}
+        if (!isset($this->events['initPool'])) {
+            return;
+        }
 
-		try {
-			call_user_func($this->events['initPool'], $this);
-		} catch (\Throwable $e) {
+        try {
+            call_user_func($this->events['initPool'], $this);
+        } catch (\Throwable $e) {
             Logger::writeExceptionLog(__LINE__, __FILE__, $e);
-		}
+        }
     }
 
-	/**
-	 * @description 添加事件
-	 *
-	 * @param string $events
-	 *
-	 * @param callable $cal
-	 *
-	 * @return Server
+    /**
+     * @description 添加事件
+     *
+     * @param string $events
+     *
+     * @param callable $cal
+     *
+     * @return Server
      *
      * @throws Exception
-	 */
-	public function on(string $event, $call) : PortInterface
-	{
-		if (!isset($this->allowEvents[$event])) {
-			return $this;
-		}
+     */
+    public function on(string $event, $call) : PortInterface
+    {
+        if (!isset($this->allowEvents[$event])) {
+            return $this;
+        }
 
-		if (!is_callable($call)) {
+        if (!is_callable($call)) {
             throw new KoveyException(sprintf('%s event is not callable', $event), 500);
-		}
+        }
 
-		$this->events[$event] = $call;
-		return $this;
-	}
+        $this->events[$event] = $call;
+        return $this;
+    }
 
-	/**
-	 * @description 管道事件回调
-	 *
-	 * @param Swoole\Server $serv
-	 *
-	 * @param int $workerId
-	 *
-	 * @param mixed $data
-	 *
-	 * @return null
-	 */
+    /**
+     * @description 管道事件回调
+     *
+     * @param Swoole\Server $serv
+     *
+     * @param int $workerId
+     *
+     * @param mixed $data
+     *
+     * @return null
+     */
     public function pipeMessage(\Swoole\WebSocket\Server $serv, $workerId, $data)
     {
         try {
-			if (!isset($this->events['pipeMessage'])) {
-				return;
-			}
+            if (!isset($this->events['pipeMessage'])) {
+                return;
+            }
 
-			call_user_func($this->events['pipeMessage'], $data['p'] ?? '', $data['m'] ?? '', $data['a'] ?? array(), $data['t'] ?? '');
-		} catch (\Throwable $e) {
+            call_user_func($this->events['pipeMessage'], $data['p'] ?? '', $data['m'] ?? '', $data['a'] ?? array(), $data['t'] ?? '');
+        } catch (\Throwable $e) {
             Logger::writeExceptionLog(__LINE__, __FILE__, $e, $data['t'] ?? '');
-		}
+        }
     }
 
-	/**
-	 * @description 链接回调
-	 *
-	 * @param Swoole\Server $serv
-	 *
-	 * @param Swoole\Http\Request $request
-	 *
-	 * @return null
-	 */
+    /**
+     * @description 链接回调
+     *
+     * @param Swoole\Server $serv
+     *
+     * @param Swoole\Http\Request $request
+     *
+     * @return null
+     */
     public function open(\Swoole\WebSocket\Server $serv, \Swoole\Http\Request $request)
     {
         if (!isset($this->events['open'])) {
@@ -234,32 +234,32 @@ class Server implements PortInterface
         }
     }
 
-	/**
-	 * @description 接收回调
-	 *
-	 * @param Swoole\Server $serv
-	 *
-	 * @param int $fd
+    /**
+     * @description 接收回调
+     *
+     * @param Swoole\Server $serv
+     *
+     * @param int $fd
      *
      * @param Frame $frame
-	 *
-	 * @return null
-	 */
+     *
+     * @return null
+     */
     public function message(\Swoole\WebSocket\Server $serv, \Swoole\WebSocket\Frame $frame)
     {
-		if ($frame->opcode != SWOOLE_WEBSOCKET_OPCODE_BINARY) {
+        if ($frame->opcode != SWOOLE_WEBSOCKET_OPCODE_BINARY) {
             $serv->disconnect($frame->fd, WebsocketCode::STREAM_ERROR, 'STREAM_ERROR');
-			return;
-		}
+            return;
+        }
 
         if (!isset($this->events['unpack'])) {
-			$serv->disconnect($frame->fd, WebsocketCode::UNPACK_STREAM_ERROR, 'UNPACK_STREAM_ERROR');
+            $serv->disconnect($frame->fd, WebsocketCode::UNPACK_STREAM_ERROR, 'UNPACK_STREAM_ERROR');
             return;
         }
 
         $traceId = hash('sha256', uniqid($frame->fd, true) . random_int(1000000, 9999999));
-		try {
-			$protobuf = call_user_func($this->events['unpack'], $frame->data);
+        try {
+            $protobuf = call_user_func($this->events['unpack'], $frame->data);
             if (empty($protobuf)) {
                 throw new Exception('unpack error', 500, 'unpack_exception');
             }
@@ -268,25 +268,25 @@ class Server implements PortInterface
         } catch (CloseConnectionException $e) {
             $serv->disconnect($frame->fd, WebsocketCode::THROW_CLOSE_CONNECTION_EXCEPTION, 'THROW_CLOSE_CONNECTION_EXCEPTION');
             Logger::writeExceptionLog(__LINE__, __FILE__, $traceId);
-		} catch (ProtocolException $e) {
-			$serv->disconnect($frame->fd, WebsocketCode::PROTOCOL_ERROR, 'PROTOCOL_ERROR');
-			Logger::writeExceptionLog(__LINE__, __FILE__, $e, $traceId);
-		} catch (\Throwable $e) {
-			Logger::writeExceptionLog(__LINE__, __FILE__, $e, $traceId);
-		}
+        } catch (ProtocolException $e) {
+            $serv->disconnect($frame->fd, WebsocketCode::PROTOCOL_ERROR, 'PROTOCOL_ERROR');
+            Logger::writeExceptionLog(__LINE__, __FILE__, $e, $traceId);
+        } catch (\Throwable $e) {
+            Logger::writeExceptionLog(__LINE__, __FILE__, $e, $traceId);
+        }
     }
 
-	/**
-	 * @description Hander 处理
-	 *
-	 * @param Message $packet
-	 *
-	 * @param int $fd
+    /**
+     * @description Hander 处理
+     *
+     * @param Message $packet
+     *
+     * @param int $fd
      *
      * @param string $traceId
-	 *
-	 * @return null
-	 */
+     *
+     * @return null
+     */
     private function handler(Message $packet, $fd, string $traceId)
     {
         if (!isset($this->events['handler'])) {
@@ -308,15 +308,15 @@ class Server implements PortInterface
         $this->send($result['message'], $result['action'], $fd);
     }
 
-	/**
-	 * @description 发送数据
-	 *
-	 * @param Message $packet
-	 *
-	 * @param int $fd
-	 *
-	 * @return null
-	 */
+    /**
+     * @description 发送数据
+     *
+     * @param Message $packet
+     *
+     * @param int $fd
+     *
+     * @return null
+     */
     private function send(Message $packet, int $action, $fd)
     {
         if (!isset($this->events['pack'])) {
@@ -338,15 +338,15 @@ class Server implements PortInterface
         return true;
     }
 
-	/**
-	 * @description 关闭链接
-	 *
-	 * @param Swoole\Server $serv
-	 *
-	 * @param int $fd
-	 *
-	 * @return null
-	 */
+    /**
+     * @description 关闭链接
+     *
+     * @param Swoole\Server $serv
+     *
+     * @param int $fd
+     *
+     * @return null
+     */
     public function close($serv, $fd)
     {
         if (!isset($this->events['close'])) {
@@ -360,23 +360,23 @@ class Server implements PortInterface
         }
     }
 
-	/**
-	 * @description 启动服务
-	 *
-	 * @return null
-	 */
+    /**
+     * @description 启动服务
+     *
+     * @return null
+     */
     public function start()
     {
         $this->serv->start();
     }
 
-	/**
-	 * @description 获取底层服务
-	 *
-	 * @return Swoole\Server
-	 */
-	public function getServ() : \Swoole\WebSocket\Server
-	{
-		return $this->serv;
-	}
+    /**
+     * @description 获取底层服务
+     *
+     * @return Swoole\Server
+     */
+    public function getServ() : \Swoole\WebSocket\Server
+    {
+        return $this->serv;
+    }
 }
