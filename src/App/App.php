@@ -294,6 +294,8 @@ class App implements AppInterface
                 return $result;
             }
 
+            $instance->setClientIp($ip);
+
             $monitorType = 'success';
             if (!isset($this->events['run_handler'])) {
                 $method = $message['method'];
@@ -381,6 +383,7 @@ class App implements AppInterface
             'request_time' => $begin * 10000,
             'class' => $message['handler'] ?? '',
             'method' => $message['method'] ?? '',
+            'service' => $this->config['server']['name'],
             'type' => $type,
             'params' => empty($message['message']) ? '' : $message['message']->serializeToJsonString(),
             'response' => Json::encode($result),
@@ -388,7 +391,9 @@ class App implements AppInterface
             'time' => $reqTime,
             'timestamp' => date('Y-m-d H:i:s', $reqTime),
             'minute' => date('YmdHi', $reqTime),
-            'traceId' => $traceId
+            'traceId' => $traceId,
+            'from' => $this->config['server']['name'],
+            'end' => $end * 10000
         );
 
         $this->monitor($data);
