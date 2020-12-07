@@ -385,7 +385,7 @@ class App implements AppInterface
             'method' => $message['method'] ?? '',
             'service' => $this->config['server']['name'],
             'type' => $type,
-            'params' => empty($message['message']) ? '' : $message['message']->serializeToJsonString(),
+            'params' => Json::encode($message),
             'response' => Json::encode($result),
             'ip' => $ip,
             'time' => $reqTime,
@@ -499,8 +499,12 @@ class App implements AppInterface
      */
     private function monitor(Array $data)
     {
-        $this->userProcess->push('monitor', $data);
         Monitor::write($data);
+        if (isset($this->events['monitor'])) {
+            go (function ($data) {
+                call_user_func($this->events['monitor'], $data);
+            }, $data);
+        }
     }
 
     /**
