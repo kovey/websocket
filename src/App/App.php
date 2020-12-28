@@ -122,6 +122,7 @@ class App implements AppInterface
         $this->events = array();
         $this->globals = array();
         $this->otherApps = array();
+        $this->config = array();
     }
 
     private function __clone()

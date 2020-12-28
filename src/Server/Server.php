@@ -66,6 +66,7 @@ class Server implements PortInterface
     {
         $this->conf = $conf;
         $this->isRunDocker = ($this->conf['run_docker'] ?? 'Off') === 'On';
+        $this->events = array();
         $this->serv = new \Swoole\WebSocket\Server($this->conf['host'], $this->conf['port']);
         $this->serv->set(array(
             'enable_coroutine' => true,
