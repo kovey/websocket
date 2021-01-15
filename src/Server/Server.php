@@ -316,6 +316,10 @@ class Server implements PortInterface
      */
     private function send(Message $packet, int $action, $fd)
     {
+        if (!$this->serv->exist($fd) || !$this->serv->isEstablished($fd)) {
+            return false;
+        }
+
         $data = $this->dispatch->dispatchWithReturn(new Event\Pack($packet, $action));
         $len = strlen($data);
         if ($len <= self::PACKET_MAX_LENGTH) {
