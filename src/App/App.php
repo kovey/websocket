@@ -14,7 +14,7 @@ namespace Kovey\Websocket\App;
 use Kovey\Websocket\Handler\HandlerAbstract;
 use Kovey\Library\Process\ProcessAbstract;
 use Kovey\Connection\Pool\PoolInterface;
-use Kovey\Library\Container\ContainerInterface;
+use Kovey\Container\ContainerInterface;
 use Kovey\Library\Config\Manager;
 use Kovey\Websocket\App\Bootstrap\Autoload;
 use Kovey\Websocket\Server\Server;
@@ -24,6 +24,11 @@ use Kovey\Logger\Monitor;
 use Google\Protobuf\Internal\Message;
 use Kovey\Connection\AppInterface;
 use Kovey\Library\Util\Json;
+use Kovey\Websocket\Event;
+use Kovey\Event\Dispatch;
+use Kovey\Event\Listener\Listener;
+use Kovey\Event\Listener\ListenerProvider;
+use Kovey\Library\Exception\KoveyException;
 
 class App implements AppInterface
 {
@@ -53,14 +58,14 @@ class App implements AppInterface
      *
      * @var Kovey\Websocket\Bootstrap\Bootstrap
      */
-    private $bootstrap;
+    private mixed $bootstrap;
 
     /**
      * @description 自定义启动
      *
      * @var mixed
      */
-    private $customBootstrap;
+    private mixed $customBootstrap;
 
     /**
      * @description 应用配置
@@ -95,7 +100,15 @@ class App implements AppInterface
      *
      * @var Array
      */
-    private Array $events;
+    private Array $onEvents;
+
+    private static Array $events = array(
+        'monitor' => Event\Monitor::class,
+        'protobuf' => Event\Protobuf::class,
+        'run_handler' => Event\RunHandler::class,
+        'pipeMessage' => Event\PipeMessage::class,
+        'error' => Event\Error::class
+    );
 
     /**
      * @description 全局变量
@@ -109,7 +122,11 @@ class App implements AppInterface
      *
      * @var mixed
      */
-    private $otherApps;
+    private mixed $otherApps;
+
+    private Dispatch $dispatch;
+
+    private ListenerProvider $provider;
 
     /**
      * @description 构造函数
@@ -119,10 +136,12 @@ class App implements AppInterface
     private function __construct()
     {
         $this->pools = array();
-        $this->events = array();
+        $this->onEvents = array();
         $this->globals = array();
         $this->otherApps = array();
         $this->config = array();
+        $this->provider = new ListenerProvider();
+        $this->dispatch = new Dispatch($this->provider);
     }
 
     private function __clone()
@@ -151,7 +170,7 @@ class App implements AppInterface
      *
      * @return App
      */
-    public function registerGlobal(string $name, $val) : App
+    public function registerGlobal(string $name, mixed $val) : App
     {
         $this->globals[$name] = $val;
         return $this;
@@ -164,7 +183,7 @@ class App implements AppInterface
      *
      * @return mixed
      */
-    public function getGlobal(string $name)
+    public function getGlobal(string $name) : mixed
     {
         return $this->globals[$name] ?? null;
     }
@@ -178,13 +197,21 @@ class App implements AppInterface
      *
      * @return App
      */
-    public function on(string $event, $callable) : App
+    public function on(string $event, callable | Array $callable) : App
     {
+        if (!isset(self::$events[$event])) {
+            return $this;
+        }
+
         if (!is_callable($callable)) {
             return $this;
         }
 
-        $this->events[$event] = $callable;
+        $this->onEvents[$event] = $event;
+        $listener = new Listener();
+        $listener->addEvent(self::$events[$event], $callable);
+        $this->provider->addListener($listener);
+
         return $this;
     }
 
@@ -246,17 +273,11 @@ class App implements AppInterface
     /**
      * @description handler业务
      *
-     * @param Message $packet
-     *
-     * @param int $fd
-     *
-     * @param string $ip
-     *
-     * @param string $traceId
+     * @param Event\Handler $event
      *
      * @return Array
      */
-    public function handler(Message $packet, $fd, string $ip, string $traceId) : Array
+    public function handler(Event\Handler $event) : Array
     {
         $begin = microtime(true);
         $reqTime = time();
@@ -266,20 +287,20 @@ class App implements AppInterface
         $trace = '';
         $err = '';
         try {
-            if (!isset($this->events['protobuf'])) {
+            if (!isset($this->onEvents['protobuf'])) {
                 $monitorType = 'exception';
-                if (isset($this->events['error'])) {
-                    $result = call_user_func($this->events['error'], 'protobuf event is not register');
+                if (isset($this->onEvents['error'])) {
+                    $result = $this->dispatch->dispatchWithReturn(new Event\Error('protobuf event is not register'));
                 }
 
                 return $result;
             }
 
-            $message = call_user_func($this->events['protobuf'], $packet);
+            $message = $this->dispatch->dispatchWithReturn(new Event\Protobuf($event->getPacket()));
             if (empty($message['handler']) || empty($message['method'])) {
                 $monitorType = 'exception';
-                if (isset($this->events['error'])) {
-                    $result = call_user_func($this->events['error'], 'unknown message');
+                if (isset($this->onEvents['error'])) {
+                    $result = $this->dispatch->dispatchWithReturn(new Event\Error('unknown message'));
                 }
 
                 return $result;
@@ -287,32 +308,32 @@ class App implements AppInterface
 
             $class = $this->config['websocket']['handler'] . '\\' . ucfirst($message['handler']);
             $keywords = $this->container->getKeywords($class, $message['method']);
-            $instance = $this->container->get($class, $traceId, $keywords['ext']);
+            $instance = $this->container->get($class, $event->getTraceId(), $keywords['ext']);
             if (!$instance instanceof HandlerAbstract) {
                 $monitorType = 'exception';
-                if (isset($this->events['error'])) {
-                    $result = call_user_func($this->events['error'], sprintf('%s is not extends HandlerAbstract', ucfirst($message['handler'])));
+                if (isset($this->onEvents['error'])) {
+                    $result = $this->dispatch->dispatchWithReturn(new Event\Error(sprintf('%s is not extends HandlerAbstract', ucfirst($message['handler']))));
                 }
 
                 return $result;
             }
 
-            $instance->setClientIp($ip);
+            $instance->setClientIp($event->getIp());
 
             $monitorType = 'success';
-            if (!isset($this->events['run_handler'])) {
+            if (!isset($this->onEvents['run_handler'])) {
                 $method = $message['method'];
                 if ($keywords['openTransaction']) {
                     $keywords['database']->getConnection()->beginTransaction();
                     try {
-                        $result = call_user_func(array($instance, $method), $message['message'], $fd);
+                        $result = call_user_func(array($instance, $method), $message['message'], $event->getFd());
                         $keywords['database']->getConnection()->commit();
                     }  catch (\Throwable $e) {
                         $keywords['database']->getConnection()->rollBack();
                         throw $e;
                     }
                 }  else {
-                    $result = call_user_func(array($instance, $method), $message['message'], $fd);
+                    $result = call_user_func(array($instance, $method), $message['message'], $event->getFd());
                 }
                 return $result;
             }
@@ -320,24 +341,24 @@ class App implements AppInterface
             if ($keywords['openTransaction']) {
                 $keywords['database']->getConnection()->beginTransaction();
                 try {
-                    $result = call_user_func($this->events['run_handler'], $instance, $message['method'], $message['message'], $fd);
+                    $result = $this->dispatch->dispatchWithReturn(new Event\RunHandler($instance, $message['method'], $message['message'], $event->getFd()));
                     $keywords['database']->getConnection()->commit();
                 } catch (\Throwable $e) {
                     $keywords['database']->getConnection()->rollBack();
                     throw $e;
                 }
             } else {
-                $result = call_user_func($this->events['run_handler'], $instance, $message['method'], $message['message'], $fd);
+                $result = $this->dispatch->dispatchWithReturn(new Event\RunHandler($instance, $message['method'], $message['message'], $event->getFd()));
             }
 
             return $result;
         } catch (KoveyException $e) {
             $trace = $e->getTraceAsString();
             $err = $e->getMessage();
-            Logger::writeExceptionLog(__LINE__, __FILE__, $e, $traceId);
+            Logger::writeExceptionLog(__LINE__, __FILE__, $e, $event->getTraceId());
             $monitorType = 'exception';
-            if (isset($this->events['error'])) {
-                $result = call_user_func($this->events['error'], 'exception');
+            if (isset($this->onEvents['error'])) {
+                $result = $this->dispatch->dispatchWithReturn(new Event\Error($e));
             }
 
             return $result;
@@ -346,8 +367,8 @@ class App implements AppInterface
             $err = $e->getMessage();
             $monitorType = 'exception';
             Logger::writeExceptionLog(__LINE__, __FILE__, $e, $traceId);
-            if (isset($this->events['error'])) {
-                $result = call_user_func($this->events['error'], 'throwable exception');
+            if (isset($this->onEvents['error'])) {
+                $result = $this->dispatch->dispatchWithReturn(new Event\Error($e));
             }
 
             return $result;
@@ -445,24 +466,14 @@ class App implements AppInterface
     /**
      * @description 进程间通信
      *
-     * @param string $path
-     *
-     * @param string $method
-     *
-     * @param Array $args
-     *
-     * @param string $traceId
+     * @param Event\PipeMessage $event
      *
      * @return null
      */
-    public function pipeMessage(string $path, string $method, Array $args, string $traceId)
+    public function pipeMessage(Event\PipeMessage $event)
     {
-        if (!isset($this->events['pipeMessage'])) {
-            return;
-        }
-
         try {
-            call_user_func($this->events['pipeMessage'], $path, $method, $args, $traceId);
+            $this->dispatch->dispatch($event);
         } catch (\Exception $e) {
             Logger::writeExceptionLog(__LINE__, __FILE__, $e, $traceId);
         } catch (\Throwable $e) {
@@ -473,11 +484,11 @@ class App implements AppInterface
     /**
      * @description 初始化连接池
      *
-     * @param Swoole\Server
+     * @param Event\InitPool $event
      *
      * @return null
      */
-    public function initPool(Server $serv)
+    public function initPool(Event\InitPool $event)
     {
         try {
             foreach ($this->pools as $pool) {
@@ -512,11 +523,7 @@ class App implements AppInterface
     private function monitor(Array $data)
     {
         Monitor::write($data);
-        if (isset($this->events['monitor'])) {
-            go (function ($data) {
-                call_user_func($this->events['monitor'], $data);
-            }, $data);
-        }
+        $this->dispatch->dispatch(new Event\Monitor($data));
     }
 
     /**
@@ -543,10 +550,7 @@ class App implements AppInterface
     {
         $fields = array(
             'server' => array(
-                'host', 'port', 'log_file', 'pid_file'
-            ), 
-            'logger' => array(
-                'info', 'exception', 'error', 'warning'
+                'host', 'port', 'logger_dir', 'pid_file'
             ), 
             'websocket' => array(
                 'name', 'handler'
@@ -706,7 +710,7 @@ class App implements AppInterface
     public function run()
     {
         if (!is_object($this->server)) {
-            throw new \Exception('server not register');
+            throw new KoveyException('server not register');
         }
 
         $this->server->start();
@@ -735,7 +739,7 @@ class App implements AppInterface
      *
      * @return App
      */
-    public function serverOn(string $event, $callable) : App
+    public function serverOn(string $event, callable | Array $callable) : App
     {
         $this->server->on($event, $callable);
         return $this;

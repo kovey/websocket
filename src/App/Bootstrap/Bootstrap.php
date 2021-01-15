@@ -16,7 +16,7 @@ use Kovey\Library\Config\Manager;
 use Kovey\Logger\Logger;
 use Kovey\Logger\Monitor;
 use Kovey\Logger\Db;
-use Kovey\Library\Container\Container;
+use Kovey\Container\Container;
 use Kovey\Websocket\App\App;
 use Kovey\Websocket\Server\Server;
 use Kovey\Library\Process\UserProcess;
@@ -33,13 +33,10 @@ class Bootstrap
     public function __initLogger(App $app)
     {
         ko_change_process_name(Manager::get('server.websocket.name') . ' websocket root');
-        Logger::setLogPath(
-            Manager::get('server.logger.info'), Manager::get('server.logger.exception'), Manager::get('server.logger.error'), 
-            Manager::get('server.logger.warning'), Manager::get('server.logger.busi_exception')
-        );
+        Logger::setLogPath(Manager::get('server.server.logger_dir'));
         Logger::setCategory(Manager::get('server.websocket.name'));
-        Db::setLogDir(Manager::get('server.logger.db'));
-        Monitor::setLogDir(Manager::get('server.logger.monitor'));
+        Db::setLogDir(Manager::get('server.server.logger_dir'));
+        Monitor::setLogDir(Manager::get('server.server.logger_dir'));
     }
 
     /**
@@ -86,5 +83,13 @@ class Bootstrap
         require_once $file;
 
         $app->registerCustomBootstrap(new \Bootstrap());
+    }
+
+    public function __initParseInject(App $app)
+    {
+        $app->registerLocalLibPath(APPLICATION_PATH . '/application');
+
+        $handler = $app->getConfig()['websocket']['handler'];
+        $app->getContainer()->parse(APPLICATION_PATH . '/application/' . $handler, $handler);
     }
 }
