@@ -25,8 +25,7 @@
         "kovey/event": "^1.0",
         "kovey/container": "^1.0",
         "kovey/logger": "^2.0",
-        "kovey/process": "^1.0",
-        "kovey/rpc-server": "^2.1"
+        "kovey/process": "^1.0"
     },
     "autoload": {
         "psr-4": {
