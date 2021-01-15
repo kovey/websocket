@@ -18,7 +18,7 @@
     ],
     "require": {
         "php": "^8.0",
-        "ext-swoole": "^1.0",
+        "ext-swoole": "^4.6.0",
         "kovey/library": "^2.1",
         "ext-protobuf": "^3.13.0",
         "kovey/connection": "^1.1",
