@@ -12,13 +12,13 @@
 namespace Kovey\Websocket\App;
 
 use Kovey\Websocket\Handler\HandlerAbstract;
-use Kovey\Library\Process\ProcessAbstract;
+use Kovey\Process\ProcessAbstract;
 use Kovey\Connection\Pool\PoolInterface;
 use Kovey\Container\ContainerInterface;
 use Kovey\Library\Config\Manager;
 use Kovey\Websocket\App\Bootstrap\Autoload;
 use Kovey\Websocket\Server\Server;
-use Kovey\Library\Process\UserProcess;
+use Kovey\Process\UserProcess;
 use Kovey\Logger\Logger;
 use Kovey\Logger\Monitor;
 use Google\Protobuf\Internal\Message;
@@ -154,7 +154,7 @@ class App implements AppInterface
      */
     public static function getInstance() : App
     {
-        if (!self::$instance instanceof App) {
+        if (empty(self::$instance)) {
             self::$instance = new self();
         }
 
@@ -366,7 +366,7 @@ class App implements AppInterface
             $trace = $e->getTraceAsString();
             $err = $e->getMessage();
             $monitorType = 'exception';
-            Logger::writeExceptionLog(__LINE__, __FILE__, $e, $traceId);
+            Logger::writeExceptionLog(__LINE__, __FILE__, $e, $event->getTraceId());
             if (isset($this->onEvents['error'])) {
                 $result = $this->dispatch->dispatchWithReturn(new Event\Error($e));
             }
@@ -374,7 +374,7 @@ class App implements AppInterface
             return $result;
         } finally {
             if (!isset($this->config['server']['monitor_open']) || $this->config['server']['monitor_open'] !== 'Off') {
-                $this->sendToMonitor($reqTime, $begin, $ip, $monitorType, $traceId, $message, $result, $trace, $err);
+                $this->sendToMonitor($reqTime, $begin, $event->getIp(), $monitorType, $event->getTraceId(), $message, $result, $trace, $err);
             }
         }
     }
@@ -475,9 +475,9 @@ class App implements AppInterface
         try {
             $this->dispatch->dispatch($event);
         } catch (\Exception $e) {
-            Logger::writeExceptionLog(__LINE__, __FILE__, $e, $traceId);
+            Logger::writeExceptionLog(__LINE__, __FILE__, $e, $event->getTraceId());
         } catch (\Throwable $e) {
-            Logger::writeExceptionLog(__LINE__, __FILE__, $e, $traceId);
+            Logger::writeExceptionLog(__LINE__, __FILE__, $e, $event->getTraceId());
         }
     }
 

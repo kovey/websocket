@@ -112,7 +112,7 @@ class Server implements PortInterface
     private function initAllowEvents() : Server
     {
         $this->allowEvents = array(
-            'handler' => Event\Hander::class,
+            'handler' => Event\Handler::class,
             'pipeMessage' => Event\PipeMessage::class,
             'initPool' => Event\InitPool::class,
             'pack' => Event\Pack::class,
@@ -336,14 +336,14 @@ class Server implements PortInterface
      *
      * @param Swoole\Server $serv
      *
-     * @param int $fd
+     * @param Swoole\Server\Event $fd
      *
      * @return null
      */
-    public function close(\Swoole\Server $serv, $fd)
+    public function close(\Swoole\Server $serv, \Swoole\Server\Event $event)
     {
         try {
-            $this->dispatch->dispatch(new Event\Close($fd));
+            $this->dispatch->dispatch(new Event\Close($event->fd));
         } catch (\Throwable $e) {
             Logger::writeExceptionLog(__LINE__, __FILE__, $e);
         }

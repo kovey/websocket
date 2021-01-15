@@ -11,7 +11,7 @@
  */
 namespace Kovey\Websocket\App\Bootstrap;
 
-use Kovey\Library\Process;
+use Kovey\Process;
 use Kovey\Library\Config\Manager;
 use Kovey\Logger\Logger;
 use Kovey\Logger\Monitor;
@@ -19,7 +19,7 @@ use Kovey\Logger\Db;
 use Kovey\Container\Container;
 use Kovey\Websocket\App\App;
 use Kovey\Websocket\Server\Server;
-use Kovey\Library\Process\UserProcess;
+use Kovey\Process\UserProcess;
 
 class Bootstrap
 {
