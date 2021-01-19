@@ -1,7 +1,6 @@
 <?php
 /**
- *
- * @description 全局大对象
+ * @description Global app object
  *
  * @package     Websocket\App
  *
@@ -33,75 +32,80 @@ use Kovey\Library\Exception\KoveyException;
 class App implements AppInterface
 {
     /**
-     * @description App实例
+     * @description App instance
      *
      * @var App
      */
     private static App $instance;
 
     /**
-     * @description 服务器
+     * @description Server
      *
      * @var Kovey\Websocket\Server\Server
      */
     private Server $server;
 
     /**
-     * @description 容器对象
+     * @description container
      *
      * @var ContainerInterface
      */
     private ContainerInterface $container;
 
     /**
-     * @description 启动处理
+     * @description bootstrap
      *
      * @var Kovey\Websocket\Bootstrap\Bootstrap
      */
     private mixed $bootstrap;
 
     /**
-     * @description 自定义启动
+     * @description custom bootstrap
      *
      * @var mixed
      */
     private mixed $customBootstrap;
 
     /**
-     * @description 应用配置
+     * @description config
      *
      * @var Array
      */
     private Array $config;
 
     /**
-     * @description 用户自定义进程
+     * @description user process
      *
      * @var UserProcess
      */
     private UserProcess $userProcess;
 
     /**
-     * @description 连接池
+     * @description connection pool
      *
      * @var Array
      */
     private Array $pools;
 
     /**
-     * @description 自动加载
+     * @description autoload
      *
      * @var Kovey\Websocket\App\Bootstrap\Autoload
      */
     private Autoload $autoload;
 
     /**
-     * @description 事件
+     * @description events listened
      *
      * @var Array
      */
     private Array $onEvents;
 
+    /**
+     * @description events support
+     *
+     * @var Array
+     */
     private static Array $events = array(
         'monitor' => Event\Monitor::class,
         'protobuf' => Event\Protobuf::class,
@@ -111,25 +115,35 @@ class App implements AppInterface
     );
 
     /**
-     * @description 全局变量
+     * @description global veriable
      *
      * @var Array
      */
     private Array $globals;
 
     /**
-     * @description 其他服务的对象
+     * @description other app object
      *
-     * @var mixed
+     * @var Array
      */
-    private mixed $otherApps;
+    private Array $otherApps;
 
+    /**
+     * @description event dispatcher
+     *
+     * @var Dispatch
+     */
     private Dispatch $dispatch;
 
+    /**
+     * @description event listener provider
+     *
+     * @var ListenerProvider
+     */
     private ListenerProvider $provider;
 
     /**
-     * @description 构造函数
+     * @description construct
      *
      * @return App
      */
@@ -148,7 +162,7 @@ class App implements AppInterface
     {}
 
     /**
-     * @description 获取App 的实例
+     * @description get app instance
      *
      * @return App
      */
@@ -162,7 +176,7 @@ class App implements AppInterface
     }
 
     /**
-     * @description 注册全局变量
+     * @description register global veriable
      *
      * @param string $name
      *
@@ -177,7 +191,7 @@ class App implements AppInterface
     }
 
     /**
-     * @description 获取全局变量
+     * @description get global veriable
      *
      * @param string $name
      *
@@ -189,7 +203,7 @@ class App implements AppInterface
     }
 
     /**
-     * @description 事件监听
+     * @description event listen
      *
      * @param string $event
      *
@@ -216,7 +230,7 @@ class App implements AppInterface
     }
 
     /**
-     * @description 设置配置
+     * @description set config
      *
      * @param Array $config
      *
@@ -229,7 +243,7 @@ class App implements AppInterface
     }
 
     /**
-     * @description 获取配置
+     * @description get config
      *
      * @return Array
      */
@@ -239,7 +253,7 @@ class App implements AppInterface
     }
 
     /**
-     * @description 启动处理
+     * @description app start
      *
      * @return App
      */
@@ -271,7 +285,7 @@ class App implements AppInterface
     }
 
     /**
-     * @description handler业务
+     * @description handler process
      *
      * @param Event\Handler $event
      *
@@ -380,7 +394,7 @@ class App implements AppInterface
     }
 
     /**
-     * @description 监控
+     * @description monitor
      *
      * @param int $reqTime
      *
@@ -396,9 +410,9 @@ class App implements AppInterface
      *
      * @param Array $result
      *
-     * @return null
+     * @return void
      */
-    private function sendToMonitor(int $reqTime, float $begin, string $ip, string $type, string $traceId, Array $message, Array $result, string $trace, string $err)
+    private function sendToMonitor(int $reqTime, float $begin, string $ip, string $type, string $traceId, Array $message, Array $result, string $trace, string $err) : void
     {
         $end = microtime(true);
 
@@ -433,7 +447,7 @@ class App implements AppInterface
     }
 
     /**
-     * @description 注册自动加载
+     * @description register autoload
      *
      * @param Autoload $autoload
      *
@@ -446,7 +460,7 @@ class App implements AppInterface
     }
 
     /**
-     * @description 注册服务端
+     * @description register server
      *
      * @param Server $server
      *
@@ -464,13 +478,13 @@ class App implements AppInterface
     }
 
     /**
-     * @description 进程间通信
+     * @description pipe message
      *
      * @param Event\PipeMessage $event
      *
-     * @return null
+     * @return void
      */
-    public function pipeMessage(Event\PipeMessage $event)
+    public function pipeMessage(Event\PipeMessage $event) : void
     {
         try {
             $this->dispatch->dispatch($event);
@@ -482,13 +496,13 @@ class App implements AppInterface
     }
 
     /**
-     * @description 初始化连接池
+     * @description init pools
      *
      * @param Event\InitPool $event
      *
-     * @return null
+     * @return void
      */
-    public function initPool(Event\InitPool $event)
+    public function initPool(Event\InitPool $event) : void
     {
         try {
             foreach ($this->pools as $pool) {
@@ -514,20 +528,20 @@ class App implements AppInterface
     }
 
     /**
-     * @description 监控
+     * @description monitor
      *
      * @param Array $data
      *
-     * @return null
+     * @return void
      */
-    private function monitor(Array $data)
+    private function monitor(Array $data) : void
     {
         Monitor::write($data);
         $this->dispatch->dispatch(new Event\Monitor($data));
     }
 
     /**
-     * @description 注册容器
+     * @description register container
      *
      * @param ContainerInterface $container
      *
@@ -540,7 +554,7 @@ class App implements AppInterface
     }
 
     /**
-     * @description 检测配置
+     * @description check config
      *
      * @return App
      *
@@ -573,33 +587,33 @@ class App implements AppInterface
     }
 
     /**
-     * @description 注册启动处理类
+     * @description register bootstrap
      *
      * @param mixed Bootstrap
      *
      * @return App
      */
-    public function registerBootstrap($bootstrap) : App
+    public function registerBootstrap(mixed $bootstrap) : App
     {
         $this->bootstrap = $bootstrap;
         return $this;
     }
 
     /**
-     * @description 注册自定义的启动处理类
+     * @description register custom bootstrap
      *
      * @param mixed Bootstrap
      *
      * @return App
      */
-    public function registerCustomBootstrap($bootstrap) : App
+    public function registerCustomBootstrap(mixed $bootstrap) : App
     {
         $this->customBootstrap = $bootstrap;
         return $this;
     }
 
     /**
-     * @description 用户自定义进程管理
+     * @description user process
      *
      * @param UserProcess $userProcess
      *
@@ -612,7 +626,7 @@ class App implements AppInterface
     }
 
     /**
-     * @description 获取用户自定义进程管理
+     * @description get user process
      *
      * @return UserProcess
      */
@@ -622,7 +636,7 @@ class App implements AppInterface
     }
 
     /**
-     * @description 注册自定义进程
+     * @description register process
      *
      * @param string $name
      *
@@ -642,7 +656,7 @@ class App implements AppInterface
     }
 
     /**
-     * @description 注册本地加载路径
+     * @description register local library path
      *
      * @param string $path
      *
@@ -659,7 +673,7 @@ class App implements AppInterface
     }
 
     /**
-     * @description 注册连接池
+     * @description register pool
      *
      * @param string $name
      *
@@ -677,7 +691,7 @@ class App implements AppInterface
     }
 
     /**
-     * @description 获取连接池
+     * @description get pool
      *
      * @param string $name
      *
@@ -691,7 +705,7 @@ class App implements AppInterface
     }
 
     /**
-     * @description 获取容器
+     * @description get container
      *
      * @return ContainerInterface
      */
@@ -701,13 +715,13 @@ class App implements AppInterface
     }
 
     /**
-     * @description 运用启动
+     * @description app start
      *
-     * @return null
+     * @return void
      *
      * @throws Exception
      */
-    public function run()
+    public function run() : void
     {
         if (!is_object($this->server)) {
             throw new KoveyException('server not register');
@@ -717,21 +731,21 @@ class App implements AppInterface
     }
 
     /**
-     * @description 发送数据
+     * @description send data to client
      *
      * @param Message $packet
      *
      * @param int $fd
      *
-     * @return null
+     * @return bool
      */
-    public function send(Message $packet, int $action, $fd)
+    public function send(Message $packet, int $action, int $fd) : bool
     {
         $this->server->send($packet, $action, $fd);
     }
 
     /**
-     * @description 服务器事件注册
+     * @description event listen on server
      *
      * @param string $name
      *
@@ -746,7 +760,7 @@ class App implements AppInterface
     }
 
     /**
-     * @description 注册其他服务的大对象
+     * @description register other app object
      *
      * @param string $name
      *
@@ -754,26 +768,26 @@ class App implements AppInterface
      *
      * @return App
      */
-    public function registerOtherApp(string $name, $app) : App
+    public function registerOtherApp(string $name, mixed $app) : App
     {
         $this->otherApps[$name] = $app;
         return $this;
     }
 
     /**
-     * @description 获取其他服务的对象
+     * @description get other app object
      *
      * @param string $name
      *
      * @return mixed
      */
-    public function getOtherApp($name)
+    public function getOtherApp($name) : mixed
     {
         return $this->otherApps[$name] ?? null;
     }
 
     /**
-     * @description 获取服务对象
+     * @description get server
      *
      * @return Server
      */

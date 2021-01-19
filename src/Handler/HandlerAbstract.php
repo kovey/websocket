@@ -1,6 +1,6 @@
 <?php
 /**
- * @description 对外接口基类
+ * @description handler
  *
  * @package
  *
@@ -15,7 +15,7 @@ abstract class HandlerAbstract
 {
     protected string $clientIp;
 
-    public function setClientIp(string $clientIp)
+    public function setClientIp(string $clientIp) : void
     {
         $this->clientIp = $clientIp;
     }

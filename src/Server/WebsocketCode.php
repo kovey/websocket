@@ -1,6 +1,6 @@
 <?php
 /**
- * @description
+ * @description websocket error
  *
  * @package
  *
