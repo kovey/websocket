@@ -172,7 +172,7 @@ class Server implements PortInterface
      *
      * @return void
      */
-    public function workerStart(\Swoole\WebSocket\Server $serv, $workerId) : void
+    public function workerStart(\Swoole\WebSocket\Server $serv, int $workerId) : void
     {
         ko_change_process_name($this->conf['name'] . ' worker');
 
