@@ -1,8 +1,8 @@
 <?php
 /**
- * @description
+ * @description run hander event
  *
- * @package Event
+ * @package Kovey\Websocket\Event
  *
  * @author kovey
  *
@@ -17,37 +17,90 @@ use Google\Protobuf\Internal\Message;
 
 class RunHandler implements EventInterface
 {
-    private HandlerAbstract $hander;
+    /**
+     * @description handler
+     *
+     * @var HandlerAbstract
+     */
+    private HandlerAbstract $handler;
 
+    /**
+     * @description method
+     *
+     * @var string
+     */
     private string $method;
 
+    /**
+     * @description message
+     *
+     * @var Messagej
+     */
     private Message $message;
 
+    /**
+     * @description fd
+     *
+     * @var int
+     */
     private int $fd;
 
-    public function __construct(HandlerAbstract $hander, string $method, Message $message, int $fd)
+    /**
+     * @description construct
+     *
+     * @param HandlerAbstract $handler
+     *
+     * @param string $method
+     *
+     * @param Message $message
+     *
+     * @param int $fd
+     *
+     * @return RunHandler
+     */
+    public function __construct(HandlerAbstract $handler, string $method, Message $message, int $fd)
     {
-        $this->hander = $hander;
+        $this->handler = $handler;
         $this->fd = $fd;
         $this->method = $method;
         $this->message = $message;
     }
 
+    /**
+     * @description get handler
+     *
+     * @return HandlerAbstract
+     */
     public function getHandler() : HandlerAbstract
     {
-        return $this->hander;
+        return $this->handler;
     }
 
+    /**
+     * @description get message
+     *
+     * @return Message
+     */
     public function getMessage() : Message
     {
         return $this->message;
     }
 
+    /**
+     * @description get fd
+     *
+     * @return int
+     */
     public function getFd() : int
     {
         return $this->fd;
     }
 
+    /**
+     * @description get method
+     *
+     * @return string
+     */
     public function getMethod() : string
     {
         return $this->method;

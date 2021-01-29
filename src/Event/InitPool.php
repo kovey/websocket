@@ -1,8 +1,8 @@
 <?php
 /**
- * @description
+ * @description init pool event
  *
- * @package
+ * @package Kovey\Websocket\Event
  *
  * @author kovey
  *
@@ -16,13 +16,30 @@ use Kovey\Websocket\Server\Server;
 
 class InitPool implements EventInterface
 {
+    /**
+     * @description server
+     *
+     * @var Server
+     */
     private Server $server;
 
+    /**
+     * @description construct
+     *
+     * @param Server $server
+     *
+     * @return InitPool
+     */
     public function __construct(Server $server)
     {
         $this->server = $server;
     }
 
+    /**
+     * @description get server
+     *
+     * @return Server
+     */
     public function getServer() : Server
     {
         return $this->server;

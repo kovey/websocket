@@ -1,8 +1,8 @@
 <?php
 /**
- * @description
+ * @description monitor event
  *
- * @package
+ * @package Kovey\Websocket\Event
  *
  * @author kovey
  *
@@ -15,13 +15,30 @@ use Kovey\Event\EventInterface;
 
 class Monitor implements EventInterface
 {
+    /**
+     * @description monitor data
+     *
+     * @var Array
+     */
     private Array $data;
 
+    /**
+     * @description construct
+     *
+     * @param Array $data
+     *
+     * @return Monitor
+     */
     public function __construct(Array $data)
     {
         $this->data = $data;
     }
 
+    /**
+     * @description get data
+     *
+     * @return Array
+     */
     public function getData() : Array
     {
         return $this->data;

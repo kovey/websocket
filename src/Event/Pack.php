@@ -1,8 +1,8 @@
 <?php
 /**
- * @description
+ * @description pack event
  *
- * @package
+ * @package Kovey\Websocket\Event
  *
  * @author kovey
  *
@@ -16,21 +16,46 @@ use Google\Protobuf\Internal\Message;
 
 class Pack implements EventInterface
 {
+    /**
+     * @description packet
+     *
+     * @var Message
+     */
     private Message $packet;
 
+    /**
+     * @description action
+     *
+     * @var int
+     */
     private int $action;
 
+    /**
+     * @description construct
+     *
+     * @return Pack
+     */
     public function __construct(Message $packet, int $action)
     {
         $this->packet = $packet;
         $this->action = $action;
     }
 
+    /**
+     * @description get packet
+     *
+     * @return Message
+     */
     public function getPacket() : Message
     {
         return $this->packet;
     }
 
+    /**
+     * @description get action
+     *
+     * @return int
+     */
     public function getAction() : int
     {
         return $this->action;

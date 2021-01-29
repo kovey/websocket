@@ -1,8 +1,8 @@
 <?php
 /**
- * @description
+ * @description open event
  *
- * @package
+ * @package Kovey\Websocket\Event
  *
  * @author kovey
  *
@@ -17,13 +17,30 @@ use Swoole\Http\Request;
 
 class Open implements EventInterface
 {
+    /**
+     * @description request object
+     *
+     * @var Request
+     */
     private Request $request;
 
+    /**
+     * @description construct
+     *
+     * @param Request $request
+     *
+     * @return Open
+     */
     public function __construct(Request $request)
     {
         $this->request = $request;
     }
 
+    /**
+     * @description get request
+     *
+     * @return Request
+     */
     public function getRequest() : Request
     {
         return $this->request;

@@ -2,7 +2,7 @@
 /**
  * @description handler
  *
- * @package
+ * @package Kovey\Websocket\Handler
  *
  * @author kovey
  *
@@ -13,8 +13,20 @@ namespace Kovey\Websocket\Handler;
 
 abstract class HandlerAbstract
 {
+    /**
+     * @description client ip
+     *
+     * @var string
+     */
     protected string $clientIp;
 
+    /**
+     * @description set client ip
+     *
+     * @param string $clientIp
+     *
+     * @return void
+     */
     public function setClientIp(string $clientIp) : void
     {
         $this->clientIp = $clientIp;

@@ -1,8 +1,8 @@
 <?php
 /**
- * @description
+ * @description pipe message event
  *
- * @package
+ * @package Kovey\Websocket\Event
  *
  * @author kovey
  *
@@ -15,8 +15,20 @@ use Kovey\Event\EventInterface;
 
 class PipeMessage implements EventInterface
 {
+    /**
+     * @description data
+     *
+     * @var Array
+     */
     private Array $data;
 
+    /**
+     * @description construct
+     *
+     * @param Array $data
+     *
+     * @return PipeMessage
+     */
     public function __construct(Array $data)
     {
         $this->data = $data;
@@ -42,21 +54,41 @@ class PipeMessage implements EventInterface
         return $this;
     }
 
+    /**
+     * @description get path
+     *
+     * @return string
+     */
     public function getPath() : string
     {
         return $this->data['p'] ?? '';
     }
 
+    /**
+     * @description get method
+     *
+     * @return string
+     */
     public function getMethod() : string
     {
         return $this->data['m'] ?? '';
     }
 
+    /**
+     * @description get arguments
+     *
+     * @return Array
+     */
     public function getArgs() : Array
     {
         return $this->data['a'] ?? array();
     }
 
+    /**
+     * @description get trace id
+     *
+     * @return string
+     */
     public function getTraceId() : string
     {
         return $this->data['t'] ?? '';

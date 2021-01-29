@@ -1,8 +1,8 @@
 <?php
 /**
- * @description
+ * @description error event
  *
- * @package
+ * @package Kovey\Websocket\Event
  *
  * @author kovey
  *
@@ -15,8 +15,20 @@ use Kovey\Event\EventInterface;
 
 class Error implements EventInterface
 {
+    /**
+     * @description error info
+     *
+     * @var string | \Throwable
+     */
     private \Throwable | string $error;
 
+    /**
+     * @description construct
+     *
+     * @param \Throwable | string $error
+     *
+     * @return Error
+     */
     public function __construct(\Throwable | string $error)
     {
         $this->error = $error;
@@ -42,6 +54,11 @@ class Error implements EventInterface
         return $this;
     }
 
+    /**
+     * @description get error info
+     *
+     * @return string | \Throwable
+     */
     public function getError() : string | \Throwable
     {
         return $this->error;

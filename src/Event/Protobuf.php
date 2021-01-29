@@ -1,8 +1,8 @@
 <?php
 /**
- * @description
+ * @description protobuf event
  *
- * @package
+ * @package Kovey\Websocket\Event
  *
  * @author kovey
  *
@@ -16,13 +16,30 @@ use Google\Protobuf\Internal\Message;
 
 class Protobuf implements EventInterface
 {
+    /**
+     * @description packet
+     *
+     * @var Message
+     */
     private Message $packet;
 
+    /**
+     * @description construct
+     *
+     * @param Message $packet
+     *
+     * @return Protobuf
+     */
     public function __construct(Message $packet)
     {
         $this->packet = $packet;
     }
 
+    /**
+     * @description get packet
+     *
+     * @return Message
+     */
     public function getPacket() : Message
     {
         return $this->packet;

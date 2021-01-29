@@ -1,8 +1,8 @@
 <?php
 /**
- * @description
+ * @description unpack event
  *
- * @package
+ * @package Kovey\Websocket\Event
  *
  * @author kovey
  *
@@ -15,16 +15,47 @@ use Kovey\Event\EventInterface;
 
 class Unpack implements EventInterface
 {
-    private string $data;
+    /**
+     * @description stream
+     * 
+     * @var string
+     */
+    private string $stream;
 
-    public function __construct(string $data)
+    /**
+     * @description construct
+     *
+     * @param string $stream
+     *
+     * @return Unpack
+     */
+    public function __construct(string $stream)
     {
-        $this->data = $data;
+        $this->stream = $stream;
     }
 
+    /**
+     * @description get stream
+     *
+     * @return string
+     */
+    public function getStream() : string
+    {
+        return $this->stream;
+    }
+
+    /**
+     * @description get data
+     *
+     * @deprecated removed 3.0
+     *
+     * @return string
+     */
     public function getData() : string
     {
-        return $this->data;
+        trigger_error('Kovey\Websocket\Event\Unpack::getData is deprecated, we will remove this method in future.', E_USER_WARNING);
+
+        return $this->getStream();
     }
 
     /**

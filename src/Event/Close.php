@@ -1,8 +1,8 @@
 <?php
 /**
- * @description
+ * @description connection close event
  *
- * @package
+ * @package Kovey\Websocket\Event
  *
  * @author kovey
  *
@@ -15,13 +15,30 @@ use Kovey\Event\EventInterface;
 
 class Close implements EventInterface
 {
+    /**
+     * @description connection fd
+     *
+     * @var int
+     */
     private int $fd;
 
+    /**
+     * @description construct
+     *
+     * @param int $fd
+     *
+     * @return Close
+     */
     public function __construct(int $fd)
     {
         $this->fd = $fd;
     }
 
+    /**
+     * @description get fd
+     *
+     * @return int
+     */
     public function getFd() : int
     {
         return $this->fd;
