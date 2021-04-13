@@ -17,6 +17,7 @@ use Kovey\Library\Exception\KoveyException;
 use Kovey\Websocket\Event;
 use Kovey\Logger\Logger;
 use Kovey\Event\EventManager;
+use Google\Protobuf\Internal\Message;
 
 class Receive
 {
@@ -124,7 +125,8 @@ class Receive
         $server->monitor(array(
             'delay' => round(($end - $this->begin) * 1000, 2),
             'request_time' => $this->begin * 10000,
-            'action' => $this->result['action'] ?? 0,
+            'action' => $this->result['req_action'] ?? 0,
+            'res_action' => $this->result['action'] ?? 0,
             'class' => $this->result['class'] ?? '',
             'method' => $this->result['method'] ?? '',
             'service' => $this->service,

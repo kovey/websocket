@@ -57,7 +57,7 @@ class Handler extends Work
             $message = $this->event->dispatchWithReturn(new Event\Encrypt($base));
             $protobuf->mergeFromString($message);
         } else {
-            $protobuf->mergeFromString($base->getMessage());
+            $protobuf->mergeFromString($base->getPacket());
         }
 
         $class = $router->getHandler();
@@ -90,6 +90,7 @@ class Handler extends Work
             $result['class'] = $router->getHandler();
             $result['method'] = $router->getMethod();
             $result['params'] = $protobuf->serializeToJsonString();
+            $result['req_action'] = $base->getAction();
 
             return $result;
         } catch (\Throwable $e) {
@@ -122,7 +123,7 @@ class Handler extends Work
         }
 
         $base = new $base;
-        $base->setMessage($event->getPacket())
+        $base->setPacket($event->getPacket()->serializeToString())
             ->setAction($event->getAction());
 
         return $base->serializeToString();

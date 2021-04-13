@@ -15,7 +15,7 @@ use Google\Protobuf\Internal\Message;
 use Kovey\Websocket\Event;
 use Kovey\App\Components\ServerAbstract;
 
-class Server implements ServerAbstract
+class Server extends ServerAbstract
 {
     const PACKET_MAX_LENGTH = 2097152;
 
@@ -119,7 +119,7 @@ class Server implements ServerAbstract
      *
      * @return void
      */
-    private function send(Message $packet, int $action, int $fd) : bool
+    public function send(Message $packet, int $action, int $fd) : bool
     {
         if (!$this->serv->exist($fd) || !$this->serv->isEstablished($fd)) {
             return false;
