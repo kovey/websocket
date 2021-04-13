@@ -10,7 +10,9 @@
  */
 namespace Kovey\Websocket\App\Bootstrap;
 
-class Autoload
+use Kovey\App\Components\AutoloadInterface;
+
+class Autoload implements AutoloadInterface
 {
     /**
      * @description custom library

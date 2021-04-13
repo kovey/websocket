@@ -12,16 +12,15 @@
 namespace Kovey\Websocket\Event;
 
 use Kovey\Event\EventInterface;
-use Google\Protobuf\Internal\Message;
 
 class Handler implements EventInterface
 {
     /**
      * @description packet
      *
-     * @var Message
+     * @var string
      */
-    private Message $packet;
+    private string $packet;
 
     /**
      * @description fd
@@ -44,6 +43,8 @@ class Handler implements EventInterface
      */
     private string $traceId;
 
+    private string $spanId;
+
     /**
      * @description construct
      *
@@ -57,20 +58,21 @@ class Handler implements EventInterface
      *
      * @return Handler
      */
-    public function __construct(Message $packet, int $fd, string $ip, string $traceId)
+    public function __construct(string $packet, int $fd, string $ip, string $traceId, string $spanId)
     {
         $this->packet = $packet;
         $this->fd = $fd;
         $this->ip = $ip;
         $this->traceId = $traceId;
+        $this->spanId = $spanId;
     }
 
     /**
      * @description get packet
      *
-     * @return Message
+     * @return string
      */
-    public function getPacket() : Message
+    public function getPacket() : string
     {
         return $this->packet;
     }
@@ -123,5 +125,10 @@ class Handler implements EventInterface
     public function stopPropagation() : EventInterface
     {
         return $this;
+    }
+
+    public function getSpanId() : string
+    {
+        return $this->spanId;
     }
 }
