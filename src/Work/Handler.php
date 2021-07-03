@@ -20,6 +20,7 @@ use Kovey\Library\Exception\CloseConnectionException;
 use Kovey\Websocket\App\Router\RouterInterface;
 use Kovey\Websocket\App\Router\RoutersInterface;
 use Kovey\Websocket\Event;
+use Kovey\Container\Keyword\Fields;
 
 class Handler extends Work
 {
@@ -70,13 +71,13 @@ class Handler extends Work
 
             $instance->setClientIp($event->getIp());
 
-            if ($keywords['openTransaction']) {
-                $instance->database->beginTransaction();
+            if ($keywords[Fields::KEYWORD_OPEN_TRANSACTION]) {
+                $keywords[Fields::KEYWORD_DATABASE]->beginTransaction();
                 try {
                     $result = $this->triggerHandler($instance, $router->getMethod(), $protobuf, $event->getFd());
-                    $instance->database->commit();
+                    $keywords[Fields::KEYWORD_DATABASE]->commit();
                 } catch (\Throwable $e) {
-                    $instance->database->rollBack();
+                    $keywords[Fields::KEYWORD_DATABASE]->rollBack();
                     throw $e;
                 }
             } else {
