@@ -104,7 +104,7 @@ class Receive
         }
 
         try {
-            $server->send($this->result['message'], $this->result['action'], $this->fd);
+            $server->send($this->result['message'], $this->result['action'], $this->fd, $this->result['ext'] ?? array());
         } catch (CloseConnectionException $e) {
             $server->getServ()->disconnect($this->fd, WebsocketCode::THROW_CLOSE_CONNECTION_EXCEPTION, 'THROW_CLOSE_CONNECTION_EXCEPTION');
             Logger::writeExceptionLog(__LINE__, __FILE__, $e, $this->traceId);
