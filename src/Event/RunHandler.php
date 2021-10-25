@@ -34,7 +34,7 @@ class RunHandler implements EventInterface
     /**
      * @description message
      *
-     * @var Messagej
+     * @var Message
      */
     private Message $message;
 
@@ -44,6 +44,13 @@ class RunHandler implements EventInterface
      * @var int
      */
     private int $fd;
+
+    /**
+     * @description base
+     *
+     * @var Message
+     */
+    private Message $base;
 
     /**
      * @description construct
@@ -58,12 +65,13 @@ class RunHandler implements EventInterface
      *
      * @return RunHandler
      */
-    public function __construct(HandlerAbstract $handler, string $method, Message $message, int $fd)
+    public function __construct(HandlerAbstract $handler, string $method, Message $message, int $fd, Message $base)
     {
         $this->handler = $handler;
         $this->fd = $fd;
         $this->method = $method;
         $this->message = $message;
+        $this->base = $base;
     }
 
     /**
@@ -124,5 +132,15 @@ class RunHandler implements EventInterface
     public function stopPropagation() : EventInterface
     {
         return $this;
+    }
+
+    /**
+     * @description get base
+     *
+     * @return Message
+     */
+    public function getBase() : Message
+    {
+        return $this->base;
     }
 }
