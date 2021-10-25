@@ -64,7 +64,7 @@ class Pack implements EventInterface
      *
      * @return int
      */
-    public function getAction() : int
+    public function getAction() : int | string
     {
         return $this->action;
     }
