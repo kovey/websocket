@@ -28,17 +28,25 @@ class Pack implements EventInterface
      *
      * @var int
      */
-    private int $action;
+    private int | string $action;
+
+    /**
+     * @description ext
+     *
+     * @var Array
+     */
+    private Array $ext;
 
     /**
      * @description construct
      *
      * @return Pack
      */
-    public function __construct(Message $packet, int $action)
+    public function __construct(Message $packet, int | string $action, Array $ext = array())
     {
         $this->packet = $packet;
         $this->action = $action;
+        $this->ext = $ext;
     }
 
     /**
@@ -79,5 +87,16 @@ class Pack implements EventInterface
     public function stopPropagation() : EventInterface
     {
         return $this;
+    }
+
+    /**
+     * @description get ext
+     *
+     * @return Array
+     *
+     */
+    public function getExt() : Array
+    {
+        return $this->ext;
     }
 }

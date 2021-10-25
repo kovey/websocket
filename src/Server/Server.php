@@ -119,13 +119,13 @@ class Server extends ServerAbstract
      *
      * @return void
      */
-    public function send(Message $packet, int $action, int $fd) : bool
+    public function send(Message $packet, int | string $action, int $fd, array $ext = array()) : bool
     {
         if (!$this->serv->exist($fd) || !$this->serv->isEstablished($fd)) {
             return false;
         }
 
-        $data = $this->event->dispatchWithReturn(new Event\Pack($packet, $action));
+        $data = $this->event->dispatchWithReturn(new Event\Pack($packet, $action, $ext));
         $len = strlen($data);
         if ($len <= self::PACKET_MAX_LENGTH) {
             return $this->serv->push($fd, $data, SWOOLE_WEBSOCKET_OPCODE_BINARY);

@@ -87,8 +87,10 @@ class App extends AA
             ->on('handler', array($this->work, 'run'))
             ->on('console', array($this, 'console'))
             ->on('initPool', array($this, 'initPool'))
-            ->on('monitor', array($this, 'monitor'))
-            ->on('pack', array($this->work, 'pack'));
+            ->on('monitor', array($this, 'monitor'));
+        if (isset($this->config['auto_pack']) && $this->config['auto_pack'] == 'On') {
+            $this->server->on('pack', array($this->work, 'pack'));
+        }
 
         return $this;
     }
@@ -135,9 +137,9 @@ class App extends AA
      *
      * @return bool
      */
-    public function send(Message $packet, int $action, int $fd) : bool
+    public function send(Message $packet, int | string $action, int $fd, Array $ext = array()) : bool
     {
-        $this->server->send($packet, $action, $fd);
+        $this->server->send($packet, $action, $fd, $ext);
     }
 
     /**
