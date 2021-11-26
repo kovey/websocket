@@ -22,7 +22,7 @@ class Server extends ServerAbstract
     /**
      * @description 初始化服务
      *
-     * @return Server
+     * @return void
      */
     protected function initServer()
     {

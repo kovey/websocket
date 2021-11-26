@@ -139,7 +139,7 @@ class App extends AA
      */
     public function send(Message $packet, int | string $action, int $fd, Array $ext = array()) : bool
     {
-        $this->server->send($packet, $action, $fd, $ext);
+        return $this->server->send($packet, $action, $fd, $ext);
     }
 
     /**
