@@ -52,6 +52,10 @@ class RunHandler implements EventInterface
      */
     private Message $base;
 
+    private string $traceId;
+
+    private string $spanId;
+
     /**
      * @description construct
      *
@@ -65,13 +69,15 @@ class RunHandler implements EventInterface
      *
      * @return RunHandler
      */
-    public function __construct(HandlerAbstract $handler, string $method, Message $message, int $fd, Message $base)
+    public function __construct(HandlerAbstract $handler, string $method, Message $message, int $fd, Message $base, string $traceId, string $spanId)
     {
         $this->handler = $handler;
         $this->fd = $fd;
         $this->method = $method;
         $this->message = $message;
         $this->base = $base;
+        $this->traceId = $traceId;
+        $this->spanId = $spanId;
     }
 
     /**
@@ -142,5 +148,15 @@ class RunHandler implements EventInterface
     public function getBase() : Message
     {
         return $this->base;
+    }
+
+    public function getTraceId() : string
+    {
+        return $this->traceId;
+    }
+
+    public function getSpanId() : string
+    {
+        return $this->spanId;
     }
 }
