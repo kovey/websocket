@@ -108,7 +108,7 @@ class Handler extends Work
         }
     }
 
-    private function triggerHandler(HandlerAbstract $instance, string $method, Message $message, int $fd, Message $base, Event\RunHandler $event) : Array
+    private function triggerHandler(HandlerAbstract $instance, string $method, Message $message, int $fd, Message $base, Event\Handler $event) : Array
     {
         if ($this->event->listened('run_handler')) {
             return $this->event->dispatchWithReturn(new Event\RunHandler($instance, $method, $message, $fd, $base, $event->getTraceId(), $event->getSpanId()));
