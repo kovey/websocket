@@ -69,6 +69,7 @@ class Server extends ServerAbstract
     {
         $this->serv->on('open', array($this, 'open'));
         $this->serv->on('message', array($this, 'message'));
+        $this->serv->on('close', array($this, 'close'));
         return $this;
     }
 
